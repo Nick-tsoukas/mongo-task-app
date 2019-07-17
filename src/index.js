@@ -62,8 +62,24 @@ app.patch('/users/:id', validateUserEntries, async (req, res, next) => {
             });
         }
         res.send(newUser);
-    } catch (e) {
-        res.send(e);
+    } catch (error) {
+        res.status(400).send(error);
+    }
+});
+
+app.delete('/users/:id', async (req, res, next) => {
+    try {
+        const user = await User.findByIdAndDelete(req.params.id);
+        if (!user) {
+            return res.status(404).send({
+                error: "Sorry, could not delete your user profile"
+            })
+        }
+        res.send(user);
+    } catch (error) {
+        res.status(400).send({
+            error: "Server error"
+        });
     }
 });
 
@@ -73,6 +89,9 @@ app.patch('/users/:id', validateUserEntries, async (req, res, next) => {
 app.get('/tasks', async (req, res, next) => {
     try {
         const tasks = await Task.find({});
+        if(!tasks.length) {
+            return res.status(404).send( { message: "Could not any find tasks"});
+        }
         res.send(tasks);
     } catch (error) {
         res.status(404).send(error)
@@ -85,7 +104,7 @@ app.get('/tasks/:id', async (req, res, next) => {
         const task = await Task.findById(req.params.id);
         res.send(task);
     } catch (error) {
-        res.status(404).send(error)
+        res.status(404).send({ message: "Can't find task", error});
     }
 });
 
@@ -97,7 +116,7 @@ app.post('/tasks', async (req, res, next) => {
         await task.save(task);
         res.send(task)
     } catch (error) {
-        res.send(error);
+        res.status(500).send(error);
     }
 });
 // update one task
@@ -112,7 +131,7 @@ app.patch('/tasks/:id', validateTaskEntries, async (req, res) => {
         }
         res.send(updatedTask);
     } catch (error) {
-        res.status(400).send(error);
+        res.status(500).send(error);
     }
 });
 
@@ -121,7 +140,7 @@ app.delete('/tasks/:id', async (req, res, next) => {
     try {
         const task = await Task.findByIdAndDelete(req.params.id);
         if (!task) {
-            res.status(404).send('could not find task');
+            res.status(404).send('could not find task to delete');
         }
         res.send(task);
     } catch (error) {
