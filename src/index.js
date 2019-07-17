@@ -1,5 +1,6 @@
 require('./db/mongoose');
 
+const bodyParser = require('body-parser');
 const express = require('express');
 const User = require('./models/user');
 const Task = require('./models/task');
@@ -7,111 +8,127 @@ const port = process.env.PORT || 3000;
 const app = express();
 
 app.use(express.json());
+app.use(bodyParser.urlencoded({
+    extended: true
+}));
 
-app.get('/users', (req, res, next) => {
-    User.find()
-        .then((users) => {
-            res.send(users);
-        })
-        .catch((err) => {
-            res.status(400).send(err)
-        });
+
+
+// gets all the users
+app.get('/users', async (req, res, next) => {
+    try {
+        const users = await User.find({});
+        res.send(users);
+    } catch (error) {
+        res.status(500).send(error);
+    }
 });
 
-app.get('/users/:id', (req, res, next) => {
-    const _id = req.params.id;
-    User.findById(_id)
-        .then((user) => {
-            res.send(user);
+// find one users by id 
+app.get('/users/:id', async (req, res, next) => {
+    const id = req.params.id;
+    try {
+        const user = await User.findById(id);
+        res.status(200).send(user)
+    } catch (error) {
+        res.status(500).send(error)
+    }
+})
+
+// create new user
+app.post('/users', async (req, res, next) => {
+    const user = new User(req.body);
+    try {
+        await user.save();
+        res.status(201).send(user);
+    } catch (error) {
+        res.status(400).send(error)
+    }
+
+});
+
+// create a new task 
+app.post('/tasks', async (req, res, next) => {
+    const task = new Task(req.body);
+    try {
+        await task.save(task);
+        res.send(task)
+    } catch (error) {
+        res.send(error);
+    }
+});
+
+// get all tasks 
+app.get('/tasks', async (req, res, next) => {
+    try {
+        const tasks = await Task.find({});
+        res.send(tasks);
+    } catch (error) {
+        res.status(404).send(error)
+    }
+});
+
+// return the amount of all task >> integer
+app.get('/tasks/count', (req, res, next) => {
+    Task.find({})
+        .then((task) => {
+            let todos = task.filter((task) => {
+                return task.completed === false;
+            });
+            return todos;
+        })
+        .then((todos) => {
+
+            const data = {
+                count: todos.length,
+                todos
+            };
+
+            res.send(data);
         })
         .catch((err) => {
             res.send(err);
         });
-})
-
-app.post('/users', (req, res, next) => {
-    const user = new User(req.body);
-
-    user.save()
-        .then((user) => {
-            console.log('user should have been created')
-            res.send(user);
-        })
-        .catch((err) => {
-            res.status(400).send(err.message);
-        });
 });
 
-app.post('/tasks', (req, res, next) => {
-    const task = new Task(req.body);
-
-    task.save()
-        .then((task) => {
-            res.send(task);
-        })
-        .catch((err) => {
-            res.status(400).send(err.message);
-        });
-});
-
-app.get('/tasks', (req, res, next) => {
-    Task.find({})
-        .then((tasks) => {
-            res.status(200).send(tasks);
-        })
-        .catch((err) => {
-            res.status(400).send(err);
-        });
-});
-
-// count all task
-
-app.get('/tasks/count', (req, res, next) => {
-    Task.find({})
-    .then((task) => {
-        let todos = task.filter((task) => {
-            return task.completed === false;
-        });
-    return todos;
-    })
-    .then((todos) => {
-       const data = {
-           count: todos.length,
-           todos
-       };
-       res.send(data)
-    })
-    .catch((err) => {
-        res.send(err);
-    });
-});
-
-app.get('/tasks/:id', (req, res, next) => {
+// get one task by id 
+app.get('/tasks/:id', async (req, res, next) => {
     const _id = req.params.id;
-
-    Task.findById(_id)
-        .then((task) => {
-            res.status(200).send(task);
-        })
-        .catch((err) => {
-            res.status(400).send(err.message);
-        });
+    try {
+        const task = await Task.findById(_id);
+        res.send(task);
+    } catch (error) {
+        res.status(404).send(error)
+    }
 });
 
 // update routes
-
-app.patch('/users/:id/:name', (req, res, next) => {
-    const options = { useFindAndModify: false, new: true };
+app.patch('/users/:id', async (req, res, next) => {
     const _id = req.params.id;
-    const name = req.params.name;
+    updateObject = req.body;
+    try {
+        const newUser = await User.findByIdAndUpdate(_id, updateObject, {new: true});
+        if(!newUser){
+            return res.send({message: "could not find the user"});
+        }
+        res.send(newUser);
+    } catch(e) {
+        res.send(e);
+    }
+});
 
-    User.findByIdAndUpdate(_id, {name}, options)
-        .then((user) =>  {
-            res.send(user);
-        })
-        .catch((err) => {
-            res.status(400).send(err.message);
-        });
+// delete task by id 
+app.delete('/tasks/:id', async (req, res, next) => {
+    const _id = req.params.id;
+    try {
+        const task = await Task.findByIdAndDelete(_id);
+        if (!task) {
+            res.status(404).send('could not find task');
+        }
+        res.send(task);
+    } catch (error) {
+        res.send(error);
+    }
 })
 
 
