@@ -39,13 +39,23 @@ router.get('/users/:id', async (req, res, next) => {
 router.post('/users', async (req, res, next) => {
     const user = new User(req.body);
     try {
-        await user.save();
+        await user.save(options);
         res.status(201).send(user);
     } catch (error) {
         res.status(400).send(error)
     }
 
 });
+
+// login user 
+router.post('/users/login',  async (req, res, next) => {
+    try {
+        const user = await User.authenticate(req.body.email, req.body.password);
+        res.send(user)
+    } catch(error) {
+        res.status(400).send({error: "Unable to login"});
+    }
+})
 
 // update one user 
 router.patch('/users/:id', validateUserEntries, async (req, res, next) => {
