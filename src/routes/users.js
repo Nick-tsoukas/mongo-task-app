@@ -13,7 +13,7 @@ router.use(express.json());
 router.use(bodyParser.urlencoded({
     extended: true
 }));
-
+// '/users' === route 
 //  ============== users routes ================
 // gets all the users
 router.get('/users', async (req, res, next) => {
@@ -49,15 +49,23 @@ router.post('/users', async (req, res, next) => {
 
 // update one user 
 router.patch('/users/:id', validateUserEntries, async (req, res, next) => {
-    updateObject = req.body;
+    const updateObject = Object.keys(req.body);
     try {
-        const newUser = await User.findByIdAndUpdate(req.params.id, updateObject, options);
-        if (!newUser) {
+        // const newUser = await User.findByIdAndUpdate(req.params.id, updateObject, options);
+        const user = await User.findById(req.params.id);
+        updateObject.forEach((update) => {
+            console.log(user)
+            user[update] = req.body[update];
+        });
+
+        await user.save();
+
+        if (!user) {
             return res.send({
                 message: "could not find the user"
             });
         }
-        res.send(newUser);
+        res.send(user);
     } catch (error) {
         res.status(400).send(error);
     }

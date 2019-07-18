@@ -14,7 +14,6 @@ router.use(bodyParser.urlencoded({
     extended: true
 }));
 //  =================== Task routes ===============
-
 // get all tasks 
 router.get('/tasks', async (req, res, next) => {
     try {
