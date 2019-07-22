@@ -37,13 +37,17 @@ router.get('/tasks/:id', async (req, res, next) => {
     }
 });
 
-
+function myName(req, res, next){
+    req.name = 'nick';
+    next()
+}
 // create a new task 
-router.post('/tasks', async (req, res, next) => {
+router.post('/tasks', myName, async (req, res, next) => {
     const task = new Task(req.body);
     try {
         await task.save(task);
-        res.send(task)
+        console.log(req.name)
+        res.send({task, name: req.name})
     } catch (error) {
         res.status(500).send(error);
     }

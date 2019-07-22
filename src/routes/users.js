@@ -22,7 +22,7 @@ router.get('/users/profile', isAuth, async (req, res, next) => {
 });
 
 // find one user by id 
-router.get('/users/:id', isAuth, async (req, res, next) => {
+router.get('/users/:id',isAuth, async (req, res, next) => {
     try {
         const user = await User.findById(req.params.id);
         res.status(200).send(user)
@@ -52,6 +52,28 @@ router.post('/users/login',  async (req, res, next) => {
         res.send({ user, token });
     } catch(error) {
         res.status(400).send({error: "Unable to login"});
+    }
+});
+
+router.post('/users/logoutAll',isAuth, async (req, res) => {
+    try {
+        req.user.tokens = [];
+        await req.user.save();
+        res.send( {message: "You are now logged out of all devices"})
+    } catch(error) {
+        res.status(500).send({message: "Unable to log out of all devices"})
+    }
+})
+
+router.post('/users/logout', isAuth, async (req, res) => {
+    try {
+        req.user.tokens = req.user.tokens.filter((token) => {
+            return token.token !== req.token;
+        });
+        await req.user.save();
+        res.send({ message: "You have successfully logged out"});
+    } catch {
+        res.status(500).send({ message: "could not log out ... please try again"})
     }
 });
 
