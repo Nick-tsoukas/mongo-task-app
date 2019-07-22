@@ -1,6 +1,7 @@
 const mongoose = require('mongoose');
 const validator = require('validator');
 const bcrypt = require('bcrypt');
+const jwt = require('jsonwebtoken');
 
 
 const userSchema = new mongoose.Schema({
@@ -38,7 +39,13 @@ const userSchema = new mongoose.Schema({
                 throw new Error("Your password can't be password");
             }
         }
-    }
+    },
+    tokens: [{
+        token: {
+            type: String,
+            required: true
+        }
+    }]
 });
 
 // password hash
@@ -49,6 +56,16 @@ userSchema.pre('save', async function (next) {
     user.password = hash;
     next()
 });
+
+// instance method
+userSchema.methods.generateAuthToken = async function () {
+    const user = this;
+    const token = jwt.sign({ _id: user.id.toString() }, 'secretkey');
+
+    user.tokens = user.tokens.concat({ token })
+    await user.save();
+    return token;
+}
 
 userSchema.statics.authenticate = async (email, password) => {
     const user = await User.findOne({ email });
