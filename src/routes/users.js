@@ -5,6 +5,7 @@ const express = require('express');
 const router = express.Router();
 const User = require('../models/User');
 
+// to be passed in for mongoose ... will return the updated document and run validators 
 const options = {
     new: true,
     runValidators: true
@@ -14,9 +15,9 @@ router.use(express.json());
 router.use(bodyParser.urlencoded({
     extended: true
 }));
-// '/users' === route 
+
 //  ============== users routes ================
-// gets the users profile if authenticated
+// gets the users profile if authenticated and sends it back a json 
 router.get('/users/profile', isAuth, async (req, res, next) => {
     res.send(req.user);
 });
@@ -31,7 +32,21 @@ router.get('/users/:id',isAuth, async (req, res, next) => {
     }
 })
 
-// create new user public route 
+// just a test route
+router.get('/cat', (req, res) => {
+    // res.send(JSON.stringify(cat))
+    const cat = {
+        name: 'nick'
+    }
+
+    cat.toJSON = function() {
+        delete this.name;
+        return this
+    }
+    res.send(JSON.stringify(cat));
+})
+
+// create new user public route ... uses the generateAuthToken method to get jwt token
 router.post('/users', async (req, res, next) => {
     const user = new User(req.body);
     try {
@@ -55,6 +70,7 @@ router.post('/users/login',  async (req, res, next) => {
     }
 });
 
+// Logs out of all devices by setting the user tokens to an empty array
 router.post('/users/logoutAll',isAuth, async (req, res) => {
     try {
         req.user.tokens = [];
@@ -65,6 +81,7 @@ router.post('/users/logoutAll',isAuth, async (req, res) => {
     }
 })
 
+// logout user on one device 
 router.post('/users/logout', isAuth, async (req, res) => {
     try {
         req.user.tokens = req.user.tokens.filter((token) => {
