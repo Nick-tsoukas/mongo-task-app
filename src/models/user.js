@@ -51,6 +51,7 @@ const userSchema = new mongoose.Schema({
 // password hash
 userSchema.pre('save', async function (next) {
     var user = this;
+    // if the user is already created and is updating profile without modifying the password exit out of this function next()
     if (!user.isModified('password')) return next();
     const hash = await bcrypt.hash(user.password,8);
     user.password = hash;
@@ -66,6 +67,7 @@ userSchema.methods.toJSON = function () {
     return userObject;
 }
 
+// when sending user profile to the client this hides the password and tokens 
 userSchema.methods.toJSON = function() {
     var obj = this.toObject();
     delete obj.password;
@@ -76,8 +78,10 @@ userSchema.methods.toJSON = function() {
 // instance method
 userSchema.methods.generateAuthToken = async function () {
     const user = this;
+    // embeds the user id into the token
     const token = jwt.sign({ _id: user.id.toString() }, 'secretkey');
 
+    // adds the token to a tokens array ... allows for logging in on multiple devices
     user.tokens = user.tokens.concat({ token })
     await user.save();
     return token;
@@ -89,6 +93,7 @@ userSchema.statics.authenticate = async (email, password) => {
     if(!user) {
         throw new Error("Could not find account ... please try again")
     }
+    //  this checks if password is correct ... if successful then return user object
     const isAuth = await bcrypt.compare(password, user.password);
 
     if(!isAuth) {

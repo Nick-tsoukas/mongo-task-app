@@ -16,37 +16,7 @@ router.use(bodyParser.urlencoded({
     extended: true
 }));
 
-//  ============== users routes ================
-// gets the users profile if authenticated and sends it back a json 
-router.get('/users/profile', isAuth, async (req, res, next) => {
-    res.send(req.user);
-});
-
-// find one user by id 
-router.get('/users/:id',isAuth, async (req, res, next) => {
-    try {
-        const user = await User.findById(req.params.id);
-        res.status(200).send(user)
-    } catch (error) {
-        res.status(500).send(error)
-    }
-})
-
-// just a test route
-router.get('/cat', (req, res) => {
-    // res.send(JSON.stringify(cat))
-    const cat = {
-        name: 'nick'
-    }
-
-    cat.toJSON = function() {
-        delete this.name;
-        return this
-    }
-    res.send(JSON.stringify(cat));
-})
-
-// create new user public route ... uses the generateAuthToken method to get jwt token
+// Create new user public route ... uses the generateAuthToken method to get jwt token
 router.post('/users', async (req, res, next) => {
     const user = new User(req.body);
     try {
@@ -59,7 +29,7 @@ router.post('/users', async (req, res, next) => {
 
 });
 
-// login user public route
+// Login user public route authenticates by email and password >>> then generates a token
 router.post('/users/login',  async (req, res, next) => {
     try {
         const user = await User.authenticate(req.body.email, req.body.password);
@@ -70,18 +40,7 @@ router.post('/users/login',  async (req, res, next) => {
     }
 });
 
-// Logs out of all devices by setting the user tokens to an empty array
-router.post('/users/logoutAll',isAuth, async (req, res) => {
-    try {
-        req.user.tokens = [];
-        await req.user.save();
-        res.send( {message: "You are now logged out of all devices"})
-    } catch(error) {
-        res.status(500).send({message: "Unable to log out of all devices"})
-    }
-})
-
-// logout user on one device 
+//  Logout user on one device 
 router.post('/users/logout', isAuth, async (req, res) => {
     try {
         req.user.tokens = req.user.tokens.filter((token) => {
@@ -93,8 +52,23 @@ router.post('/users/logout', isAuth, async (req, res) => {
         res.status(500).send({ message: "could not log out ... please try again"})
     }
 });
+// Logs out of all devices by setting the user tokens to an empty array
+router.post('/users/logoutAll',isAuth, async (req, res) => {
+    try {
+        req.user.tokens = [];
+        await req.user.save();
+        res.send( {message: "You are now logged out of all devices"})
+    } catch(error) {
+        res.status(500).send({message: "Unable to log out of all devices"})
+    }
+});
 
-// update one user 
+// Profile ... sent from the isAuth middleware 
+router.get('/users/profile', isAuth, async (req, res, next) => {
+    res.send(req.user);
+});
+
+// Update Profile 
 router.patch('/users/:id', isAuth, validateUserEntries, async (req, res, next) => {
     const updateObject = Object.keys(req.body);
     try {
@@ -118,15 +92,11 @@ router.patch('/users/:id', isAuth, validateUserEntries, async (req, res, next) =
     }
 });
 
-router.delete('/users/:id', isAuth, async (req, res, next) => {
+// Delete user route
+router.delete('/users/profile', isAuth, async (req, res, next) => {
     try {
-        const user = await User.findByIdAndDelete(req.params.id);
-        if (!user) {
-            return res.status(404).send({
-                error: "Sorry, could not delete your user profile"
-            })
-        }
-        res.send(user);
+       const user = await User.findByIdAndDelete(req.user.id);
+       res.send(user);
     } catch (error) {
         res.status(400).send({
             error: "Server error"

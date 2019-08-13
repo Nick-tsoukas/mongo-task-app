@@ -13,7 +13,7 @@ const tasks = require('./routes/tasks');
 
 const router = express.Router();
 
-//  config
+//  config for the routes ... 
 app.use(users);
 app.use(tasks);
 
