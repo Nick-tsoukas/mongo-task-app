@@ -69,24 +69,14 @@ router.get('/users/profile', isAuth, async (req, res, next) => {
 });
 
 // Update Profile 
-router.patch('/users/:id', isAuth, validateUserEntries, async (req, res, next) => {
+router.patch('/users/profile', isAuth, validateUserEntries, async (req, res, next) => {
     const updateObject = Object.keys(req.body);
     try {
-        // const newUser = await User.findByIdAndUpdate(req.params.id, updateObject, options);
-        const user = await User.findById(req.params.id);
         updateObject.forEach((update) => {
-            console.log(user)
-            user[update] = req.body[update];
+            req.user[update] = req.body[update];
         });
-
-        await user.save();
-
-        if (!user) {
-            return res.send({
-                message: "could not find the user"
-            });
-        }
-        res.send(user);
+        await req.user.save();
+        res.send(req.user);
     } catch (error) {
         res.status(400).send(error);
     }
@@ -95,6 +85,7 @@ router.patch('/users/:id', isAuth, validateUserEntries, async (req, res, next) =
 // Delete user route
 router.delete('/users/profile', isAuth, async (req, res, next) => {
     try {
+        // isAuth assigns req.user to the authenticated user ... find by id and delete
        const user = await User.findByIdAndDelete(req.user.id);
        res.send(user);
     } catch (error) {

@@ -11,6 +11,7 @@ const isAuth = async function (req, res, next) {
         if(!user) {
             throw new Error();
         }
+        // sets req.user to the mongo user document
         req.token = token;
         req.user = user;
         next()
