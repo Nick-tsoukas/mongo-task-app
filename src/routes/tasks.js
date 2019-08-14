@@ -18,7 +18,10 @@ router.use(bodyParser.urlencoded({
 // create a new task 
 router.post('/tasks', isAuth, async (req, res, next) => {
 
-    const task = new Task({...req.body, author: req.user.id });
+    const task = new Task({
+        ...req.body,
+        author: req.user.id
+    });
     try {
         await task.save(task);
         res.send(task)
@@ -44,9 +47,16 @@ router.patch('/tasks/:id', validateTaskEntries, async (req, res) => {
 });
 
 // get all tasks 
-router.get('/tasks', async (req, res, next) => {
+router.get('/tasks', isAuth, async (req, res, next) => {
     try {
-        const tasks = await Task.find({});
+        /* alternative way to do this is ...
+        await req.user.populate('tasks).execPopulate()
+        This will return all the tasks that are virtually assigned to the user ... tasks that user created
+        refer to the Task model >>> Task.js
+        */
+
+        const tasks = await Task.find({author: req.user.id});
+
         if (!tasks.length) {
             return res.status(404).send({
                 message: "Could not any find tasks"
@@ -59,15 +69,23 @@ router.get('/tasks', async (req, res, next) => {
 });
 
 // get one task by id 
-router.get('/tasks/:id', async (req, res, next) => {
+router.get('/tasks/:id', isAuth, async (req, res, next) => {
+    const _id = req.params.id;
     try {
-        const task = await Task.findById(req.params.id);
-        res.send(task);
-    } catch (error) {
-        res.status(404).send({
-            message: "Can't find task",
-            error
+        const task = await Task.findOne({
+            _id,
+            author: req.user.id
         });
+        if (!task) {
+            return res.status(404).send({
+                message: "could not find the task"
+            })
+        }
+
+        res.send(task);
+
+    } catch (error) {
+        res.send(error);
     }
 });
 
