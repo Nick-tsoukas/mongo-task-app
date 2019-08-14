@@ -20,3 +20,11 @@ app.use(tasks);
 app.listen(port, () => {
     console.log(`The server is now listening on port ${port}`);
 });
+
+const main = async () => {
+   const user = await User.findById('5d532972d84602adb28ec035');
+   await user.populate('userTasks').execPopulate();
+   console.log(user.userTasks)
+}
+
+main()

@@ -1,5 +1,6 @@
 const mongoose = require('mongoose');
 
+// ref property on the author ties the user to the task 
 const Task = mongoose.model('Task', {
     description: {
         type: String,
@@ -11,7 +12,13 @@ const Task = mongoose.model('Task', {
         default: false,
         required: true,
         trim: true
+    },
+    author: {
+        type: mongoose.Schema.Types.ObjectId,
+        required: true,
+        ref: 'User'
     }
+
 });
 
 module.exports = Task;

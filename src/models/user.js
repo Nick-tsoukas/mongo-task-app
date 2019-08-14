@@ -48,6 +48,15 @@ const userSchema = new mongoose.Schema({
     }]
 });
 
+// virtual is not saved to the database it's just a way for mongoose to create relationship between documents
+userSchema.virtual('userTasks', {
+    ref: 'Task',
+    // user id ... user id is what is used on the task document to create the relationship
+    localField: '_id',
+    // the property on the task that is used to create the relationship between the two documents
+    foreignField: 'author'
+})
+
 // password hash
 userSchema.pre('save', async function (next) {
     var user = this;
